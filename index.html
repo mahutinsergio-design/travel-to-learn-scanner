@@ -107,14 +107,21 @@
       { fps: 10, qrbox: { width: 250, height: 250 } },
 
       function(decodedText) {
-        if (busy) return;
 
-        busy = true;
+  if (busy) return;
 
-        message("QR code détecté : " + decodedText);
+  busy = true;
 
-        stopScanner();
-      },
+  message(
+    "QR code détecté : " + decodedText +
+    ". Présentez le badge suivant."
+  );
+
+  setTimeout(function() {
+    busy = false;
+  }, 2000);
+
+},
 
       function() {}
     )
