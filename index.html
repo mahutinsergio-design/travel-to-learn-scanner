@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <title>Scanner QR - TRAVEL TO LEARN 2027</title>
+
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f7f4;
+      color: #183c2b;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 22px;
+      border-radius: 18px;
+    }
+
+    h1 { font-size: 23px; }
+
+    p { color: #60756a; }
+
+    #qrReader {
+      width: 100%;
+      margin: 20px auto;
+    }
+
+    button {
+      background: #176c50;
+      color: white;
+      border: none;
+      padding: 15px 22px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      margin: 8px;
+    }
+
+    button.stop { background: #455568; }
+
+    #message {
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 10px;
+      background: #eef3f0;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+
+<div class="container">
+
+  <h1>TRAVEL TO LEARN</h1>
+  <h2>Contrôle des présences</h2>
+
+  <p>Place le QR code du participant devant la caméra.</p>
+
+  <div id="qrReader"></div>
+
+  <button onclick="startScanner()">Démarrer le scanner</button>
+
+  <button class="stop" onclick="stopScanner()">Arrêter</button>
+
+  <div id="message">
+    Scanner prêt. En attente du démarrage.
+  </div>
+
+</div>
+
+<script>
+  let scanner = null;
+  let busy = false;
+
+  function message(text) {
+    document.getElementById("message").textContent = text;
+  }
+
+  function startScanner() {
+
+    if (typeof Html5Qrcode === "undefined") {
+      message("Impossible de charger la bibliothèque du scanner.");
+      return;
+    }
+
+    if (scanner) {
+      message("Le scanner est déjà actif.");
+      return;
+    }
+
+    scanner = new Html5Qrcode("qrReader");
+
+    scanner.start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+
+      function(decodedText) {
+        if (busy) return;
+
+        busy = true;
+
+        message("QR code détecté : " + decodedText);
+
+        stopScanner();
+      },
+
+      function() {}
+    )
+    .then(function() {
+      message("Caméra activée. Présente un badge devant l'objectif.");
+    })
+    .catch(function(error) {
+      scanner = null;
+      message("Erreur caméra : " + error);
+    });
+  }
+
+  function stopScanner() {
+
+    if (!scanner) return;
+
+    const currentScanner = scanner;
+    scanner = null;
+
+    currentScanner.stop()
+      .then(function() {
+        currentScanner.clear();
+      })
+      .catch(function(error) {
+        message("Erreur lors de l'arrêt : " + error);
+      });
+  }
+</script>
+
+</body>
+</html>
