@@ -112,14 +112,7 @@
 
   busy = true;
 
-  message(
-    "QR code détecté : " + decodedText +
-    ". Présentez le badge suivant."
-  );
-
-  setTimeout(function() {
-    busy = false;
-  }, 2000);
+  sendAttendance(decodedText);
 
 },
 
@@ -149,6 +142,57 @@
         message("Erreur lors de l'arrêt : " + error);
       });
   }
+  // CONNEXION À GOOGLE SHEETS
+
+const GOOGLE_SCRIPT_URL =
+  "https://script.google.com/macros/s/AKfycbyVmSmqjrWEOnhsTO3msIRMbBahoelrDd26gi4h3hkm6d9zdPFJCF2swSzYk8slrDyziA/exec";
+
+const scannerTicket = new URLSearchParams(
+  window.location.hash.substring(1)
+).get("ticket");
+
+function sendAttendance(participantId) {
+
+  if (!scannerTicket) {
+    message("Accès expiré. Rouvrez le scanner depuis l'application organisateur.");
+    busy = false;
+    return;
+  }
+
+  message("Enregistrement de " + participantId + " en cours...");
+
+  const callbackName = "ttlCallback";
+
+  window[callbackName] = function(result) {
+
+    delete window[callbackName];
+
+    if (result.success) {
+      message(result.message);
+    } else {
+      message("Erreur : " + result.message);
+    }
+
+    busy = false;
+  };
+
+  const script = document.createElement("script");
+
+  script.src =
+    GOOGLE_SCRIPT_URL +
+    "?action=scanner" +
+    "&callback=" + callbackName +
+    "&ticket=" + encodeURIComponent(scannerTicket) +
+    "&id=" + encodeURIComponent(participantId);
+
+  script.onerror = function() {
+    delete window[callbackName];
+    busy = false;
+    message("Impossible de contacter le serveur. Vérifiez Internet.");
+  };
+
+  document.body.appendChild(script);
+}
 </script>
 
 </body>
